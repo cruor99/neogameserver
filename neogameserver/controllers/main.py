@@ -19,9 +19,11 @@ def register():
     form = RegisterForm()
 
     if form.validate_on_submit():
-        user = User(form.username.data, form.password.data, form.email, "nonpremium")
+        user = User(form.username.data, form.password.data, form.email.data, "nonpremium")
         db.session.add(user)
         db.session.commit()
+        flash("Registration successfull")
+        return redirect(url_for("./"))
     return render_template("register.html", form=form)
 
 

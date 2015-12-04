@@ -1,11 +1,13 @@
 #! ../env/bin/python
 
 from flask import Flask
+from flask_admin import Admin
 from webassets.loaders import PythonLoader as PythonAssetsLoader
 
 from neogameserver import assets
-from neogameserver.models import db
+from neogameserver.models import db, User
 from neogameserver.controllers.main import main
+from neogameserver.controllers.adminviews import adminviews, NeoModelView
 
 from neogameserver.extensions import (
     cache,
@@ -32,6 +34,9 @@ def create_app(object_name, env="prod"):
     app.config.from_object(object_name)
     app.config['ENV'] = env
 
+    admin = Admin(app, name="neogameserver", template_mode="bootstrap3")
+    admin.add_view(NeoModelView(User, db.session))
+
     # initialize the cache
     cache.init_app(app)
 
@@ -51,5 +56,6 @@ def create_app(object_name, env="prod"):
 
     # register our blueprints
     app.register_blueprint(main)
+    app.register_blueprint(adminviews)
 
     return app
