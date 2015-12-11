@@ -22,6 +22,7 @@ manager.add_command("db", MigrateCommand)
 
 migrate = Migrate(app, db)
 
+
 @manager.shell
 def make_shell_context():
     """ Creates a python REPL with several default imports

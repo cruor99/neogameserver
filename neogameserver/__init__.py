@@ -5,7 +5,8 @@ from flask_admin import Admin
 from webassets.loaders import PythonLoader as PythonAssetsLoader
 
 from neogameserver import assets
-from neogameserver.models import db, User
+from neogameserver.models import db, User, Subscription, MinecraftProduct, VentriloProduct
+from neogameserver.models import OrderProduct, HostServer, Port
 from neogameserver.controllers.main import main
 from neogameserver.controllers.adminviews import adminviews, NeoModelView
 
@@ -36,6 +37,12 @@ def create_app(object_name, env="prod"):
 
     admin = Admin(app, name="neogameserver", template_mode="bootstrap3")
     admin.add_view(NeoModelView(User, db.session))
+    admin.add_view(NeoModelView(Subscription, db.session))
+    admin.add_view(NeoModelView(MinecraftProduct, db.session))
+    admin.add_view(NeoModelView(VentriloProduct, db.session))
+    admin.add_view(NeoModelView(OrderProduct, db.session))
+    admin.add_view(NeoModelView(HostServer, db.session))
+    admin.add_view(NeoModelView(Port, db.session))
 
     # initialize the cache
     cache.init_app(app)
