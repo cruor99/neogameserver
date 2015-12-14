@@ -17,13 +17,13 @@ class LoginForm(Form):
             return False
 
         # Does our the exist
-        user = User.query.filter_by(username=self.username.data).first()
+        user = User.objects(username=self.username.data)[0]
         if not user:
             self.username.errors.append('Invalid username or password')
             return False
 
         # Do the passwords match
-        if not user.check_password(self.password.data):
+        if not User.check_password(user.password, self.password.data):
             self.username.errors.append('Invalid username or password')
             return False
 

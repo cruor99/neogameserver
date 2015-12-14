@@ -1,14 +1,14 @@
 #! ../env/bin/python
 
 from flask import Flask
-from flask_admin import Admin
 from webassets.loaders import PythonLoader as PythonAssetsLoader
+from flask.ext.admin import Admin
+from flask.ext.admin.contrib.mongoengine import ModelView
 
 from neogameserver import assets
-from neogameserver.models import db, User, Subscription, MinecraftProduct, VentriloProduct
-from neogameserver.models import OrderProduct, HostServer, Port
+from neogameserver.models import db, User, MinecraftProduct, VentriloProduct
+from neogameserver.models import Hostserver, Port
 from neogameserver.controllers.main import main
-from neogameserver.controllers.adminviews import adminviews, NeoModelView
 
 from neogameserver.extensions import (
     cache,
@@ -35,25 +35,26 @@ def create_app(object_name, env="prod"):
     app.config.from_object(object_name)
     app.config['ENV'] = env
 
-    admin = Admin(app, name="neogameserver", template_mode="bootstrap3")
-    admin.add_view(NeoModelView(User, db.session))
-    admin.add_view(NeoModelView(Subscription, db.session))
-    admin.add_view(NeoModelView(MinecraftProduct, db.session))
-    admin.add_view(NeoModelView(VentriloProduct, db.session))
-    admin.add_view(NeoModelView(OrderProduct, db.session))
-    admin.add_view(NeoModelView(HostServer, db.session))
-    admin.add_view(NeoModelView(Port, db.session))
-
     # initialize the cache
     cache.init_app(app)
 
     # initialize the debug tool bar
     debug_toolbar.init_app(app)
 
-    # initialize SQLAlchemy
+    # initialize MongoEngine
     db.init_app(app)
 
     login_manager.init_app(app)
+
+    # Flask Admin stuff
+    admin = Admin(app, "Neogameserver: Mongoengine")
+
+    admin.add_view(ModelView(User))
+    admin.add_view(ModelView(MinecraftProduct))
+    admin.add_view(ModelView(VentriloProduct))
+    admin.add_view(ModelView(Hostserver))
+    admin.add_view(ModelView(Port))
+
 
     # Import and register the different asset bundles
     assets_env.init_app(app)
@@ -63,6 +64,5 @@ def create_app(object_name, env="prod"):
 
     # register our blueprints
     app.register_blueprint(main)
-    app.register_blueprint(adminviews)
 
     return app

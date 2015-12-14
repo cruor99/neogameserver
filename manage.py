@@ -4,8 +4,6 @@ import os
 
 from flask.ext.script import Manager, Server
 from flask.ext.script.commands import ShowUrls, Clean
-from flask.ext.sqlalchemy import SQLAlchemy
-from flask.ext.migrate import Migrate, MigrateCommand
 from neogameserver import create_app
 from neogameserver.models import db, User
 
@@ -18,9 +16,6 @@ manager = Manager(app)
 manager.add_command("server", Server())
 manager.add_command("show-urls", ShowUrls())
 manager.add_command("clean", Clean())
-manager.add_command("db", MigrateCommand)
-
-migrate = Migrate(app, db)
 
 
 @manager.shell
@@ -31,14 +26,6 @@ def make_shell_context():
 
     return dict(app=app, db=db, User=User)
 
-
-@manager.command
-def createdb():
-    """ Creates a database with all of the tables defined in
-        your SQLAlchemy models
-    """
-
-    db.create_all()
 
 if __name__ == "__main__":
     manager.run()

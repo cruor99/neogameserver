@@ -1,30 +1,73 @@
-from flask.ext.sqlalchemy import SQLAlchemy
+from flask.ext.mongoengine import MongoEngine
 from flask.ext.login import UserMixin, AnonymousUserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 
 import datetime
 
-db = SQLAlchemy()
+db = MongoEngine()
 
 
-class User(db.Model, UserMixin):
-    id = db.Column(db.Integer(), primary_key=True)
-    username = db.Column(db.String(), unique=True)
-    password = db.Column(db.String())
-    email = db.Column(db.String(), unique=True)
-    role = db.Column(db.String())
 
-    def __init__(self, username, password, email, role):
-        self.username = username
-        self.set_password(password)
-        self.email = email
-        self.role = role
+class Hostserver(db.Document):
+
+    servername = db.StringField()
+    serverip = db.StringField()
+
+    def __unicode__(self):
+        return self.servername
+
+
+class Port(db.Document):
+
+    portnumber = db.StringField()
+    taken = db.StringField()
+    hostserver = db.ReferenceField(Hostserver)
+
+    def __unicode__(self):
+        return "Portnumber: {}, Taken: {}".format(self.portnumber, self.taken)
+
+
+class Product(db.Document):
+
+    startdate = db.DateTimeField(default=datetime.datetime.now())
+    enddate = db.DateTimeField()
+    productname = db.StringField()
+    baseprice = db.IntField()
+    port = db.ReferenceField(Port)
+    description = db.StringField()
+
+    meta = {
+        "allow_inheritance": True
+    }
+
+    def __unicode__(self):
+        return self.productname
+
+
+
+class User(db.Document, UserMixin):
+    # id = db.Column(db.Integer(), primary_key=True)
+    # username = db.Column(db.String(), unique=True)
+    # password = db.Column(db.String())
+    # email = db.Column(db.String(), unique=True)
+    # role = db.Column(db.String())
+
+    # _id = ObjectId("23403480")
+    username = db.StringField(required = True, unique=True, verbose_name="Username",
+                              help_text="Username is required")
+    password = db.StringField(required = True, verbose_name = "Password Hash",
+                              help_text="Password Hash should be provided")
+    email = db.StringField(required = True, unique=True, verbose_name="Email",
+                           help_text="Email is required")
+    role = db.StringField(Required = True, verbose_name="Role", help_text="Role is required")
+    products = db.ListField(db.ReferenceField(Product))
 
     def set_password(self, password):
         self.password = generate_password_hash(password)
 
-    def check_password(self, value):
-        return check_password_hash(self.password, value)
+    @classmethod
+    def check_password(self, password, value):
+        return check_password_hash(password, value)
 
     def is_authenticated(self):
         if isinstance(self, AnonymousUserMixin):
@@ -42,106 +85,20 @@ class User(db.Model, UserMixin):
             return False
 
     def get_id(self):
-        return self.id
+        return self.username
 
-    def __repr__(self):
-        return '<User %r>' % self.username
-
-
-class Subscription(db.Model, UserMixin):
-
-    id = db.Column(db.Integer, primary_key = True)
-    userid = db.Column(db.Integer(), db.ForeignKey("user.id"))
-    user = db.relationship("User", foreign_keys="[Subscription.userid]")
-    startdate = db.Column(db.DateTime(), default=datetime.datetime.now())
-    enddate = db.Column(db.DateTime())
-    productid = db.Column(db.Integer(), db.ForeignKey("order_product.id"))
-    product = db.relationship("OrderProduct", foreign_keys="[Subscription.productid]")
-
-    def __init__(self, userid=None, enddate=None, productid=None):
-        self.userid = userid
-        self.enddate = enddate
-        self.productid = productid
+    def __unicode__(self):
+        return self.username
 
 
-class OrderProduct(db.Model):
-
-    id = db.Column(db.Integer, primary_key = True)
-    mcproduct = db.Column(db.Integer(), db.ForeignKey("minecraft_product.id"))
-    mcport = db.Column(db.Integer(), db.ForeignKey("port.id"))
-    ventproduct = db.Column(db.Integer(), db.ForeignKey("ventrilo_product.id"))
-    ventport = db.Column(db.Integer(), db.ForeignKey("port.id"))
-    minecraft_product = db.relationship("MinecraftProduct",
-                                        foreign_keys="[OrderProduct.mcproduct]")
-    ventrilo_product = db.relationship("VentriloProduct",
-                                       foreign_keys="[OrderProduct.ventproduct]")
-    ventrilo_port = db.relationship("Port", foreign_keys="[OrderProduct.ventport]")
-    minecraft_port = db.relationship("Port", foreign_keys="[OrderProduct.mcport]")
+# Different products inherit from Product baseclass to be listed in the subcription
 
 
+class MinecraftProduct(Product):
 
-    def __init__(self, mcproduct=None, ventproduct=None):
-        self.mcproduct = mcproduct
-        self.ventproduct = ventproduct
-
-
-    def __repr__(self):
-        return "<Order: MC: {}, Vent:{}".format(self.mcproduct, self.ventproduct)
+    dedicated_ram = db.IntField()
 
 
-class HostServer(db.Model):
+class VentriloProduct(Product):
 
-    id = db.Column(db.Integer, primary_key = True)
-    servername = db.Column(db.String(), unique = True)
-    serverip = db.Column(db.String(), unique = True)
-
-    def __init__(self, servername=None, serverip=None):
-        self.servername = servername
-        self.serverip = serverip
-
-    def __repr__(self):
-        return "<HostServer: {}".format(self.servername)
-
-
-class Port(db.Model):
-
-    id = db.Column(db.Integer, primary_key = True)
-    portnumber = db.Column(db.Integer)
-    taken = db.Column(db.String())
-    hostserver = db.Column(db.Integer(), db.ForeignKey("host_server.id"))
-    host_server = db.relationship("HostServer", foreign_keys = "[Port.hostserver]")
-
-    def __init__(self, portnumber=None, taken=None, hostserver=None):
-        self.portnumber = portnumber
-        self.taken = taken
-        self.hostserver = hostserver
-
-    def __repr__(self):
-        return "<Portnumber: {}".format(self.portnumber)
-
-
-
-
-
-class MinecraftProduct(db.Model):
-
-    id = db.Column(db.Integer, primary_key = True)
-    dedicated_ram = db.Column(db.Integer)
-    # price in USD
-    price = db.Column(db.Integer)
-    description = db.Column(db.String())
-
-    def __repr__(self):
-        return "<Description: %r>" % self.description
-
-
-class VentriloProduct(db.Model):
-
-    id = db.Column(db.Integer, primary_key = True)
-    slots = db.Column(db.Integer)
-    # price in USD
-    price_per_slot = db.column(db.Integer)
-    description = db.Column(db.String())
-
-    def __repr__(self):
-        return "<Description %r>" %self.description
+    slots = db.IntField()

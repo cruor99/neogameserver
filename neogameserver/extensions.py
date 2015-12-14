@@ -20,4 +20,7 @@ login_manager.login_message_category = "warning"
 
 @login_manager.user_loader
 def load_user(userid):
-    return User.query.get(userid)
+    print "Userid", userid
+    user = User.objects(username=userid)[0]
+
+    return user

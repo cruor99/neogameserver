@@ -17,7 +17,13 @@ class DevConfig(Config):
     DEBUG = True
     DEBUG_TB_INTERCEPT_REDIRECTS = False
 
-    SQLALCHEMY_DATABASE_URI = os.environ.get('SQLALCHURI')
+    #SQLALCHEMY_DATABASE_URI = os.environ.get('SQLALCHURI')
+    MONGODB_SETTINGS = {
+        "db": "neogameserver",
+        "host": "mongodb://localhost/neogameserver"
+    }
+
+    DEBUG_TB_PANELS = ['flask.ext.mongoengine.panels.MongoDebugPanel']
 
     CACHE_TYPE = 'null'
     ASSETS_DEBUG = True
