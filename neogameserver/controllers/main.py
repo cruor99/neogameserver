@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, flash, request, redirect, url_for
-from flask.ext.login import login_user, logout_user, login_required
+from flask.ext.login import login_user, logout_user, login_required, current_user
 
 from neogameserver.extensions import cache
 from neogameserver.forms import LoginForm, RegisterForm
@@ -19,9 +19,11 @@ def register():
     form = RegisterForm()
 
     if form.validate_on_submit():
-        user = User(form.username.data, form.password.data, form.email.data, "nonpremium")
-        db.session.add(user)
-        db.session.commit()
+        userdocument = User(username = form.username.data)
+        userdocument.set_password(form.password.data)
+        userdocument.email = form.email.data
+        userdocument.role = "Standard"
+        userdocument.save()
         flash("Registration successfull")
         return redirect(url_for(".home"))
     return render_template("register.html", form=form)
@@ -32,7 +34,7 @@ def login():
     form = LoginForm()
 
     if form.validate_on_submit():
-        user = User.query.filter_by(username=form.username.data).one()
+        user = User.objects(username=form.username.data)[0]
         login_user(user)
 
         flash("Logged in successfully.", "success")
