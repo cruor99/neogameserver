@@ -1,5 +1,0 @@
-from neogameserver import app, admin, db
-from models import User
-from flask_admin.contrib.sqla import ModelView
-
-admin.add_view(ModelView(User, db.session))
