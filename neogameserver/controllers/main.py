@@ -24,7 +24,7 @@ def register():
         userdocument.email = form.email.data
         userdocument.role = "Standard"
         userdocument.save()
-        flash("Registration successfull")
+        flash("Registration successful")
         return redirect(url_for(".home"))
     return render_template("register.html", form=form)
 
